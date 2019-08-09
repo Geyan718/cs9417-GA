@@ -1,6 +1,8 @@
 import numpy as np
 
 class GA_learner:
+    # crossover functions take in a list of chromosomes, and return a list of offspring
+    # mutation function takes a single chromosome, and returns a single chromosome
     def __init__(self, epochs_size=1000, generation_size=100, crossover_probability=0.9, crossover_type=1, mutation_probability= 0.1,
         fitness_function=None, one_point_crossover=None, two_point_crossover=None, mutation=None):
         self.epochs_size = epochs_size
@@ -61,11 +63,11 @@ class GA_learner:
             # otherwise pair is copied unchanged
             if np.random.random_sample() < self.crossover_probability:
                 if self.crossover_type == 1:
-                    offspring = self.one_point_crossover(chromosomes[intermediate_gen[rand_pairing[0]]],
-                                                        chromosomes[intermediate_gen[rand_pairing[1]]])
+                    offspring = self.one_point_crossover([chromosomes[intermediate_gen[rand_pairing[0]]],
+                                                        chromosomes[intermediate_gen[rand_pairing[1]]]])
                 else:
-                    offspring = self.two_point_crossover(chromosomes[intermediate_gen[rand_pairing[0]]],
-                                                        chromosomes[intermediate_gen[rand_pairing[1]]])
+                    offspring = self.two_point_crossover([chromosomes[intermediate_gen[rand_pairing[0]]],
+                                                        chromosomes[intermediate_gen[rand_pairing[1]]]])
                 next_gen.extend(offspring)
             else:
                 next_gen.extend([chromosomes[intermediate_gen[rand_pairing[0]]], chromosomes[intermediate_gen[rand_pairing[1]]]])
@@ -75,7 +77,7 @@ class GA_learner:
         for m in [np.where(mutation_chance < self.mutation_probability)]:
             next_gen[m] = self.mutation(next_gen[m])
 
-        next_gen.extend([chromosomes[elite_id] * 2])
+        next_gen.extend([chromosomes[elite_id]] * 2)
 
         return avg_fitness, elite, next_gen
 
