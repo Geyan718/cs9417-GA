@@ -3,6 +3,7 @@ import numpy as np
 class GA_learner:
     # crossover functions take in a list of chromosomes, and return a list of offspring
     # mutation function takes a single chromosome, and returns a single chromosome
+    # assume generation size to be even
     def __init__(self, epochs_size=1000, generation_size=100, crossover_probability=0.9, crossover_type=1, mutation_probability= 0.1,
         fitness_function=None, one_point_crossover=None, two_point_crossover=None, mutation=None):
         self.epochs_size = epochs_size
@@ -15,14 +16,18 @@ class GA_learner:
         self.two_point_crossover = two_point_crossover
         self.mutation = mutation
 
+    def find_gen_fitness(self, chromosomes):
+        # returns numpy array of fitness values, in same order as chromosomes
+        gen_fitness = np.ones(self.generation_size)
+        for c in range(0, self.generation_size):
+            gen_fitness[c] = self.fitness_function(chromosomes[c])
+        return gen_fitness
+
     def grow_generation(self, chromosomes):
         # chromosomes is a list of chromosomes, representing hypotheses
-
-        curr_gen_fitness = np.ones(self.generation_size)
         # chromosomes are referred to by their index into the list of chromosomes
-        for c in range(0, self.generation_size):
-            curr_gen_fitness[c] = self.fitness_function(chromosomes[c])
-    
+
+        curr_gen_fitness = self.find_gen_fitness(chromosomes)
         elite_id = np.argmax(curr_gen_fitness)[0]
         elite = (chromosomes[elite_id], curr_gen_fitness[elite_id])
 
@@ -77,6 +82,7 @@ class GA_learner:
         for m in [np.where(mutation_chance < self.mutation_probability)]:
             next_gen[m] = self.mutation(next_gen[m])
 
+        # implement elitism
         next_gen.extend([chromosomes[elite_id]] * 2)
 
         return avg_fitness, elite, next_gen
