@@ -1,5 +1,6 @@
 import numpy as np
 
+# 
 class NeuralNetwork(object):
     def __init__(self, epochs=1000, batch_size=None, neural_numbers=[2]):
         self.epochs = epochs
@@ -11,22 +12,28 @@ class NeuralNetwork(object):
     def fit(self,X,y):
         self.X,self.y = X,y
         self.initial_weight()
-        self.backpropagate(X,y)
     
     def forward(self,X):
+
         output_list = []
         input_x = X
 
         for layer in range(self.layers):
 
+            #first hidden layer 
             cur_weight = self.weight_list[layer]
             cur_bias = self.bias_list[layer]
+
             # Calculate the output for current layer
-            output = self.neuron_output(cur_weight,input_x,cur_bias)
+            if layer == 0:
+                output = self.neuron_output(cur_weight,input_x,cur_bias)
+            elif layer == 1:
+                output = self.neuron_output_second(cur_weight,input_x,cur_bias)    
+
             # The current output will be the input for the next layer.
             input_x =  output
-
             output_list.append(output)
+
         return output_list
 
     def predict(self,X):
@@ -35,6 +42,7 @@ class NeuralNetwork(object):
         return pred_y
 
     def initial_weight(self):
+
         if self.X is not None and self.y is not None:
             x=self.X
             y=self.y
@@ -47,6 +55,7 @@ class NeuralNetwork(object):
             last_neural_number = input_dim     
 
             for cur_neural_number in number_NN:
+                
                 # The dimension of weight matrix is last neural number * current neural number
                 weights = np.random.randn(last_neural_number, cur_neural_number)
                 # The number of dimension for bias is 1 and the number of current neural
@@ -64,14 +73,16 @@ class NeuralNetwork(object):
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
     
-    # Derivation of the sigmoid activation function
-    def sigmoid_der(self, x):
-        return (1 - x) * x
 
     # Calculate the output for this layer
     def neuron_output(self,w,x,b):
         wx=np.dot(x, w)
         return self.sigmoid( wx + b)
+
+    # Calculate the output for second hidden layer
+    def neuron_output(self,w,x,b):
+        wx=np.dot(x, w)
+        return self.softmax( wx + b)    
 
     def der_last_layer(self,loss_last,output,input_x):
         # softmax for last layer
@@ -82,16 +93,20 @@ class NeuralNetwork(object):
         db = np.sum(loss, axis=0, keepdims=True)
         return loss,dW,db
 
+    
+    '''
     def der_hidden_layer(self,loss_last,output,input_x,weight):
         loss = self.sigmoid_der(output) * np.dot(loss_last,weight.T)
         db = np.sum(loss, axis=0, keepdims=True)
         dW = np.dot(input_x.T, loss)
         return loss,dW,db
+    '''
 
     def softmax(self,y):
         #return np.argmax(y,axis=1)
         return np.exp(y) / np.sum(np.exp(y), axis=0)
 
+    # Loss Function 
     def cross_entropy(X,y):
         """
         X is the output from fully connected layer (num_examples x num_classes)
