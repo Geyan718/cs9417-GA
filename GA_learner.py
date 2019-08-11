@@ -29,7 +29,7 @@ class GA_learner:
 
         curr_gen_fitness = self.find_gen_fitness(chromosomes)
         elite_id = np.argmax(curr_gen_fitness)[0]
-        elite = (chromosomes[elite_id], curr_gen_fitness[elite_id])
+        elite = (chromosomes[elite_id].copy(), curr_gen_fitness[elite_id])
 
         # selection of intermediate generation using remainder stochastic sampling
         intermediate_gen = []
@@ -75,13 +75,14 @@ class GA_learner:
                                                         chromosomes[intermediate_gen[rand_pairing[1]]]])
                 next_gen.extend(offspring)
             else:
-                next_gen.extend([chromosomes[intermediate_gen[rand_pairing[0]]], chromosomes[intermediate_gen[rand_pairing[1]]]])
+                next_gen.extend([chromosomes[intermediate_gen[rand_pairing[0]]].copy(), chromosomes[intermediate_gen[rand_pairing[1]]].copy()])
         
+        # mutation
         for m in range(0, self.generation_size - 2):
             next_gen[m] = self.mutation(next_gen[m])
 
         # implement elitism
-        next_gen.extend([chromosomes[elite_id]] * 2)
+        next_gen.extend([chromosomes[elite_id].copy()] * 2)
 
         return avg_fitness, elite, next_gen
 
