@@ -77,9 +77,7 @@ class GA_learner:
             else:
                 next_gen.extend([chromosomes[intermediate_gen[rand_pairing[0]]], chromosomes[intermediate_gen[rand_pairing[1]]]])
         
-        # apply mutation according to mutation probability
-        mutation_chance = np.random.random_sample(self.generation_size - 2)
-        for m in [np.where(mutation_chance < self.mutation_probability)]:
+        for m in range(0, self.generation_size - 2):
             next_gen[m] = self.mutation(next_gen[m])
 
         # implement elitism
