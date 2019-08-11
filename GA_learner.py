@@ -3,6 +3,8 @@ import numpy as np
 class GA_learner:
     # crossover functions take in a list of chromosomes, and return a list of offspring
     # mutation function takes a single chromosome, and returns a single chromosome
+    # chromosomes considered to be containers of immutable objects
+    # i.e. chromosomes can be copied completely with a shallow copy
     # assume generation size to be even
     def __init__(self, epochs_size=1000, generation_size=100, crossover_probability=0.9, crossover_type=1, mutation_probability= 0.1,
         fitness_function=None, one_point_crossover=None, two_point_crossover=None, mutation=None):
