@@ -11,6 +11,7 @@ class mushroom_learner:
 
     def __init__(self):
         self.attributes, self.data = self.parse_arff_file('mushroom.arff')
+        self.num_data = len(self.data)
         self.ga_trainer = GA_learner(1000, 100, 0.9, 1, 0.1,
                                      self.mushroom_fitness, self.mushroom_one_point_crossover,
                                      self.mushroom_two_point_crossover, self.mushroom_mutation)
@@ -28,6 +29,7 @@ class mushroom_learner:
         self.read_format_string = self.read_format_string[:-3]
         self.read_format_string += '1'
         self.chromosome_length = total_val_length * 2 - 1
+        self.num_attributes = len(self.attributes_encoding)
 
     def parse_arff_file(self, file='mushroom.arff'):
         with open(file, 'r') as f:
@@ -37,7 +39,8 @@ class mushroom_learner:
         return attributes, data
 
     def mushroom_fitness(self, chromosome):
-        pass
+        hypothesis = self.create_hypothesis(chromosome)
+        return self.test_hypothesis(hypothesis)
 
     def mushroom_one_point_crossover(self, parents):
         crossover_point = np.random.randint(0, self.chromosome_length)
@@ -91,9 +94,9 @@ class mushroom_learner:
 
         attribute_blocks = chromosome.readlist(self.read_format_string)
         hypothesis = []
-        for a in range(0, len(attribute_args) - 1):
+        for a in range(0, self.num_attributes - 1):
             clause = []
-            for encoding_value in self.attributes_encoding[a]:
+            for encoding_value in self.attributes_encoding[a][2]:
                 attribute_value_code = attribute_blocks[a].read(2)
                 if attribute_value_code[0] == '0':
                     # value is not inlcuded
@@ -119,10 +122,54 @@ class mushroom_learner:
         pass
 
     def test_hypothesis(self, hypothesis):
-        pass
+        num_pass = 0
+        for instance in self.data:
+            consistent = evaluate_hypothesis(hypothesis, instance)
+            if consistent:
+                num_pass += 1
+        percentage_pass = num_pass / self.num_data * 100
+        return percentage_pass
 
     def evaluate_hypothesis(self, hypothesis, training_instance):
-        pass
+        # for each attribute value in the training instance
+        # check if satisfies hypothesis clause for that attribute
+        # must satisfy all clauses to satisfy rule
+
+        satisfied = True
+        for a in range(0, self.num_attributes - 1):
+            if training_instance[a] in hypothesis[a]:
+                continue
+            else:
+                neg_literals = [-l for l in hypothesis[a] if l < 0]
+                if not neg_literals:
+                    if training_instance[a] not in neg_literals:
+                        continue
+                    else:
+                        satisfied = False
+                        break
+                else:
+                    # neg_literals is empty
+                    # training instance value is not mentioned at all in positive
+                    # hence value does not satisfy clause
+                    satisfied = False
+                    break
+
+        # if rule has been satisfied, we expect classes to match
+        # if rule has not been satisfied, classes should not match
+        # consistent is a bool representing whether the rule and classification
+        # is consistent with the training instance
+        if satisfied:
+            if training_instance[-1] == hypothesis[-1]:
+                consistent = True
+            else:
+                consistent = False
+        else:
+            if training_instance[-1] != hypothesis[-1]:
+                consistent = True
+            else:
+                consistent = False
+
+        return consistent
 
     def create_random_chromosome(self):
         initial = bitstring.BitStream(bin='0'*self.chromosome_length)
@@ -141,7 +188,7 @@ class mushroom_learner:
         with open(file_name, 'w') as results:
             self.write_information(results)
             # TODO: time logging
-            results.write('Data format:\n==== or ++++ for last solution\nEpoch\ncurr_avg_fitness\ncurr_best_chromosome\ncurr_best_fitness\n')
+            results.write('Data format:\n ++++ for last solution\nEpoch,curr_avg_fitness,curr_best_chromosome,curr_best_fitness\n')
 
             initial_chromosomes = []
             initial_chromosomes.extend([create_random_chromosome()] * generation_size)
@@ -152,8 +199,7 @@ class mushroom_learner:
                 curr_avg_fitness, curr_elite, next_generation = self.ga_trainer.grow_generation(curr_generation)
             
                 if e % 10 == 0:
-                    results.write('====\n')
-                    results.write('{}\n{}\n{}\n{}\n'.format(str(e), str(curr_avg_fitness), 
+                    results.write('{},{},{},{}\n'.format(str(e), str(curr_avg_fitness),
                                                             self.print_hypothesis(curr_elite[0]), str(curr_elite[1])))
                     print('Epoch {}: avg_fitness {}, best_fitness {}\n'.format(e, curr_avg_fitness, elite[1]))
                 curr_generation = next_generation
@@ -166,7 +212,7 @@ class mushroom_learner:
             best_readable = self.print_hypothesis(best_hypothesis)
         
             results.write('++++\n')
-            results.write('{}\n{}'.format(best_readable, str(best_fitness)))
+            results.write('{},{}'.format(best_readable, str(best_fitness)))
 
     def write_information(self, file_handle):
         file_handle.write('Epochs: {}\n'.format(str(self.ga_trainer.epochs_size)))

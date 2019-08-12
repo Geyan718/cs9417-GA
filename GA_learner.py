@@ -34,6 +34,7 @@ class GA_learner:
         elite = (chromosomes[elite_id].copy(), curr_gen_fitness[elite_id])
 
         # selection of intermediate generation using remainder stochastic sampling
+        # intermediate generation is a list of indexes into original list
         intermediate_gen = []
         avg_fitness = curr_gen_fitness.sum() / self.generation_size
         curr_gen_fitness = curr_gen_fitness / avg_fitness
