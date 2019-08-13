@@ -2,11 +2,14 @@ import arff
 import numpy as np
 import time
 import bitstring
-import GA_learner
+from GA_learner import GA_learner
+from NeuralNetwork import NeuralNetwork as nn 
+
 
 class balance_learner:
+
     def __init__(self):
-        self.attributes, self.data = self.parse_arff_file('mushroom.arff')
+        self.attributes, self.data = self.parse_arff_file('balance-scale.arff')
         self.ga_trainer = GA_learner(1000, 100, 0.9, 1, 0.1,
                                      self.balance_fitness, self.balance_one_point_crossover,
                                      self.balance_two_point_crossover, self.balance_mutation)
@@ -23,110 +26,52 @@ class balance_learner:
         # remove extra space and comma at the end as well  
         self.read_format_string = self.read_format_string[:-3]
         self.read_format_string += '1'
-        self.chromosome_length = total_val_length * 2 - 1
+        self.chromosome_length = 35
+        self.chromosome = create_random_chromosome(chromosome_length)
 
-    def parse_arff_file(self, file='mushroom.arff'):
+    def parse_arff_file(self, file='balance-scale.arff'):
         with open(file, 'r') as f:
             file_contents = arff.load(f,encode_nominal=True)
         attributes = file_contents['attributes']
         data = file_contents['data']
         return attributes, data
 
-    def mushroom_fitness(self, chromosome):
-        pass
+    def create_random_chromosome(length):
+        initial = numpy.random.normal(0,0.1,length)
+        return initial
 
-    def mushroom_one_point_crossover(self, parents):
-        crossover_point = np.random.randint(0, self.chromosome_length)
-        parent_1 = parents[0]
-        parent_2 = parents[1]
-        offspring_1 = parent_1[:crossover_point] + parent_2[crossover_point:]
-        offspring_2 = parent_2[:crossover_point] + parent_1[crossover_point:]
-        return [offspring_1, offspring_2]
-
-    def mushroom_two_point_crossover(self, parents):
-        crossover_points = np.random.randint(0, self.chromosome_length, 2)
-        if crossover_points[0] == crossover_points[1]:
-            offspring_1 = parents[0].copy()
-            offspring_2 = parents[1].copy()
-        else:
-            parent_1 = parents[0]
-            parent_2 = parents[1]
-            high = np.amax(crossover_points)
-            low = np.amin(crossover_points)
-            offspring_1 = parent_1[:low] + parent_2[low:high] + parent_1[high:]
-            offspring_2 = parent_2[:low] + parent_1[low:high] + parent_2[high:]
-        return [offspring_1, offspring_2]
-
-    def mushroom_mutation(self, chromosome):
-        mutation_chance = np.random.random_sample(self.chromosome_length)
-        chromosome.invert(np.where(mutation_chance < self.ga_trainer.mutation_probability)[0].tolist())
-        return chromosome
-
-    def create_hypothesis(self, chromosome):
-        # hypothesis is a CNF logical boolean rule
-        # where rule <==> class{edible, poisonous}
-        # i.e. rule iff classification / classification iff rule
+    def import_weights(self,chromosome):
+        chrom = self.chromosome.copy()
+        first_layer_weights = chrom[0:15].reshape(4,4)
+        first_layer_bias = chrom[16:19].reshape(1,4)
+        second_layer_weights = chrom[20:32].reshape(4,3)
+        second_layer_bias = chrom[33:35].reshape(1,3)
         
-        # hypothesis is represented as a list of disjunctive clauses
-        # clauses are represented as a list of encoding values for attribute values
-        # each encoding value represents a literal, meaning attribute = attribute_value
-        # for the attribute value represented by the encoding value
-        # positive encoding value means that the literal is in the clause
-        # negative encoding value means that NOT_literal is in the clause
-        # if an encoding value does not appear in the clause list, it is not in the clause at all
+        #pass it to feed forward 
+        nn.weight_list = first_layer_weights
+        output = nn.forward(nn,)
 
-        # each attribute value has two bits
-        # first bit is whether the literal will be in the clause
-        # 0 means not in clause, 1 is in clause
-        # second bit represents whether positive or negation of literal is in clause
-        # 0 is negation, 1 is positive
-        # final class is represented by one bit only
-        # bit value corresponds directly to encoding value
-        
-        # clauses and encoding values are all in the same order as parsed and defined in the arff file
-
-        attribute_blocks = chromosome.readlist(self.read_format_string)
-        hypothesis = []
-        for a in range(0, len(attribute_args) - 1):
-            clause = []
-            for encoding_value in self.attributes_encoding[a]:
-                attribute_value_code = attribute_blocks[a].read(2)
-                if attribute_value_code[0] == '0':
-                    # value is not inlcuded
-                    continue
-                else:
-                    if attribute_value_code[1] == '0':
-                        # negation of value is in clause
-                        # notated as a negative of the encoding value
-                        clause.append(-encoding_value)
-                    else:
-                        # encoding value is added to clause
-                        clause.append(encoding_value)
-            hypothesis.append(clause)
-
-        # add final classification to hypothesis
-        # encoding value of classification corresponds directly to bit value
-        hypothesis.append(attribute_blocks[-1].read(1))
-        
-        return hypothesis
 
     
+   
+
+    def balance_one_point_crossover(self, parents):
+        pass
+
+    def balance_two_point_crossover(self, parents):
+        pass
+
+    def mutation(self, chromosome):
+        pass
+
+    def create_hypothesis(self, chromosome):
         
-    def print_hypothesis(self, h):
-        # return hypothesis in readable string form
-        pass
-
-    def test_hypothesis(self, hypothesis):
-        pass
-
-    def evaluate_hypothesis(self, hypothesis, training_instance):
-        pass
-
-    def create_random_chromosome(self):
-        initial = bitstring.BitStream(bin='0'*self.chromosome_length)
-        random_init = np.random.random_sample(self.chromosome_length)
-        intial.invert(np.where(random_init < 0.5)[0].tolist())
-        return initial
+        # a hypothesis looks like:
+        # LW LD RW RD B
+        # 00111 10000 11111 10101 010
+        # 12345 12345 12345 12345 LBR    
+         
+        pass    
 
     def run_simulation(self, file_name, epochs, generation_size, 
                        crossover_probability, crossover_type, mutation_probability):
