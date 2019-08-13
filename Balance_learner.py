@@ -1,7 +1,8 @@
 import arff
 import numpy as np
 import time
-import bitstring
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
 from GA_learner import GA_learner
 from NeuralNetwork import NeuralNetwork as nn 
 
@@ -13,31 +14,22 @@ class balance_learner:
         self.ga_trainer = GA_learner(1000, 100, 0.9, 1, 0.1,
                                      self.balance_fitness, self.balance_one_point_crossover,
                                      self.balance_two_point_crossover, self.balance_mutation)
-        self.attributes_encoding = []
-        self.read_format_string = ''
-        total_val_length = 0
-        for a in self.attributes:
-            value_length = len(a[1])
-            self.attributes_encoding.append((a[0], value_length, [r for r in range(0, value_length)]))
-            total_val_length += value_length
-            self.read_format_string += 'bits:{}, '.format(value_length*2)
-        
-        # final attribute only has 1 binary value 
-        # remove extra space and comma at the end as well  
-        self.read_format_string = self.read_format_string[:-3]
-        self.read_format_string += '1'
         self.chromosome_length = 35
-        self.chromosome = create_random_chromosome(chromosome_length)
+
+        # one hot encoding for data
+        ct = ColumnTransformer([('one_hot', OneHotEncoder(), [4])],remainder='passthrough',sparse_threshold=0)
+        tf_d = ct.fit_transform(self.data)
+        self.data = np.concatenate((tf_d[:,3:], tf_d[:,0:3]), axis=1)
 
     def parse_arff_file(self, file='balance-scale.arff'):
         with open(file, 'r') as f:
-            file_contents = arff.load(f,encode_nominal=True)
+            file_contents = arff.load(f, encode_nomial = True)
         attributes = file_contents['attributes']
         data = file_contents['data']
         return attributes, data
 
-    def create_random_chromosome(length):
-        initial = numpy.random.normal(0,0.1,length)
+    def create_random_chromosome(self):
+        initial = numpy.random.normal(0,0.1,self.chromosome_length)
         return initial
 
     def import_weights(self,chromosome):
@@ -62,16 +54,7 @@ class balance_learner:
         pass
 
     def mutation(self, chromosome):
-        pass
-
-    def create_hypothesis(self, chromosome):
-        
-        # a hypothesis looks like:
-        # LW LD RW RD B
-        # 00111 10000 11111 10101 010
-        # 12345 12345 12345 12345 LBR    
-         
-        pass    
+        pass  
 
     def run_simulation(self, file_name, epochs, generation_size, 
                        crossover_probability, crossover_type, mutation_probability):
@@ -105,11 +88,9 @@ class balance_learner:
             best_id = np.argmax(final_fitness)[0]
             best_fitness = final_fitness[best_id]
             best_chromosome = curr_generation[best_id]
-            best_hypothesis = self.create_hypothesis(best_chromosome)
-            best_readable = self.print_hypothesis(best_hypothesis)
         
             results.write('++++\n')
-            results.write('{}\n{}'.format(best_readable, str(best_fitness)))
+            results.write('{}\n{}'.format(best_chromosome, str(best_fitness)))
 
     def write_information(self, file_handle):
         file_handle.write('Epochs: {}\n'.format(str(self.ga_trainer.epochs_size)))
