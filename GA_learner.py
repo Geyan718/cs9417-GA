@@ -1,6 +1,6 @@
 import numpy as np
 
-class GA_learner:
+class GA_learner():
     # crossover functions take in a list of chromosomes, and return a list of offspring
     # mutation function takes a single chromosome, and returns a single chromosome
     # chromosomes considered to be containers of immutable objects
@@ -45,10 +45,19 @@ class GA_learner:
         int_selection = selection_prob_split[1]
         int_selection.astype(int)
 
-        if (int_selection.sum() > 100):
-            # TODO: Sort by fitness, pick best ones
+        if (int_selection.sum() > self.generation_size):
+            # Sort by fitness, pick best ones
             # should be a rare if not non-occuring case
-            pass
+            sorted = np.argsort(curr_gen_fitness)
+            added = 0
+            to_add = 0
+            while(added < self.generation_size):
+                ind_added = 0
+                while ((ind_added < int_selection[sorted[to_add]]) and (added < self.generation_size)):
+                    intermediate_gen.append(sorted[to_add])
+                    ind_added += 1
+                    added += 1
+                to_add_id += 1
         else:
             for id in range(0, self.generation_size):
                 intermediate_gen.extend([id] * int_selection[id])
