@@ -30,7 +30,7 @@ class GA_learner():
         # chromosomes are referred to by their index into the list of chromosomes
 
         curr_gen_fitness = self.find_gen_fitness(chromosomes)
-        elite_id = np.argmax(curr_gen_fitness)[0]
+        elite_id = np.argmax(curr_gen_fitness)
         elite = (chromosomes[elite_id].copy(), curr_gen_fitness[elite_id])
 
         # selection of intermediate generation using remainder stochastic sampling

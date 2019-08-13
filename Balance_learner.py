@@ -87,7 +87,7 @@ class balance_learner:
                 curr_generation = next_generation
 
             final_fitness = self.ga_trainer.find_gen_fitness(curr_generation)
-            best_id = np.argmax(final_fitness)[0]
+            best_id = np.argmax(final_fitness)
             best_fitness = final_fitness[best_id]
             best_chromosome = curr_generation[best_id]
         
