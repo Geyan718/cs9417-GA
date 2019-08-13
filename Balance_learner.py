@@ -92,7 +92,7 @@ class balance_learner:
         with open(file_name, 'w') as results:
             self.write_information(results)
             # TODO: time logging
-            results.write('Data format:\n==== or ++++ for last solution\nEpoch\ncurr_avg_fitness\ncurr_best_chromosome\ncurr_best_fitness\n')
+            results.write('Data format:\n++++ before last solution\nEpoch,curr_avg_fitness,curr_best_fitness\n')
 
             initial_chromosomes = []
             initial_chromosomes.extend([create_random_chromosome()] * generation_size)
@@ -103,9 +103,7 @@ class balance_learner:
                 curr_avg_fitness, curr_elite, next_generation = self.ga_trainer.grow_generation(curr_generation)
             
                 if e % 10 == 0:
-                    results.write('====\n')
-                    results.write('{}\n{}\n{}\n{}\n'.format(str(e), str(curr_avg_fitness), 
-                                                            self.print_hypothesis(curr_elite[0]), str(curr_elite[1])))
+                    results.write('{},{},{}\n'.format(str(e), str(curr_avg_fitness), str(curr_elite[1])))
                     print('Epoch {}: avg_fitness {}, best_fitness {}\n'.format(e, curr_avg_fitness, elite[1]))
                 curr_generation = next_generation
 
@@ -115,7 +113,7 @@ class balance_learner:
             best_chromosome = curr_generation[best_id]
         
             results.write('++++\n')
-            results.write('{}\n{}'.format(best_chromosome, str(best_fitness)))
+            results.write('{}\n{}'.format(str(best_fitness), best_chromosome))
 
     def write_information(self, file_handle):
         file_handle.write('Epochs: {}\n'.format(str(self.ga_trainer.epochs_size)))

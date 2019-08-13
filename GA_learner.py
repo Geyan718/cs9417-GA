@@ -31,7 +31,7 @@ class GA_learner():
 
         curr_gen_fitness = self.find_gen_fitness(chromosomes)
         elite_id = np.argmax(curr_gen_fitness)
-        elite = (chromosomes[elite_id].copy(), curr_gen_fitness[elite_id])
+        elite = (elite_id, curr_gen_fitness[elite_id])
 
         # selection of intermediate generation using remainder stochastic sampling
         # intermediate generation is a list of indexes into original list
