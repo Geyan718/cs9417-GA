@@ -81,18 +81,10 @@ class NeuralNetwork():
 
     # Loss Function 
     def cross_entropy(cls, predictions,labels):
-        """
-        X is the output from fully connected layer (num_examples x num_classes)
-        y is labels (num_examples x 1)
-            Note that y is not one-hot encoded vector. 
-            It can be computed as y.argmax(axis=1) from one-hot encoded vectors of labels if required.
-        """
-        m = labels.shape[0]
-        # We use multidimensional array indexing to extract 
-        # softmax probability of the correct label for each sample.
-        # Refer to https://docs.scipy.org/doc/numpy/user/basics.indexing.html#indexing-multi-dimensional-arrays for understanding multidimensional array indexing.
-        log_likelihood = -np.log(p[range(m),labels])
-        loss = np.sum(log_likelihood) / m
+        epsilon = 1e-12
+        n = labels.shape[0]
+        clipped_preds = np.clip(predictions, epsilon, 1. - epsilon)
+        loss = -np.sum(labels*np.log(clipped_preds))/n
         return loss
 
     

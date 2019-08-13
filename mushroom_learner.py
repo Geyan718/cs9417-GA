@@ -2,9 +2,9 @@ import arff
 import numpy as np
 import time
 import bitstring
-import GA_learner
+from GA_learner import GA_learner
 
-class mushroom_learner:
+class mushroom_learner():
     # chromosomes are represented by a bitstring
     # 2 bits for each value of each attribute, except for classification
     # 1 bit for classification as either poisonous or edible
@@ -25,16 +25,17 @@ class mushroom_learner:
             self.read_format_string += 'bits:{}, '.format(value_length*2)
         
         # final attribute only has 1 binary value 
-        # remove extra space and comma at the end as well  
+        # remove extra space and comma at the end as well
         self.read_format_string = self.read_format_string[:-3]
         self.read_format_string += '1'
-        self.chromosome_length = total_val_length * 2 - 1
+        self.chromosome_length = total_val_length * 2 - 3
         self.num_attributes = len(self.attributes_encoding)
 
         # add 1 to all encoding values, which by default in arff start from 0
         for instance in self.data:
             for a in instance:
-                a += 1
+                if a is not None:
+                    a += 1
 
     def parse_arff_file(self, file='mushroom.arff'):
         with open(file, 'r') as f:
@@ -80,6 +81,7 @@ class mushroom_learner:
         # i.e. rule iff classification / classification iff rule
         
         # hypothesis is represented as a list of disjunctive clauses
+        # final classification is a single number, the encoding value
         # clauses are represented as a list of encoding values for attribute values
         # each encoding value represents a literal, meaning attribute = attribute_value
         # for the attribute value represented by the encoding value
@@ -96,11 +98,12 @@ class mushroom_learner:
         # bit value corresponds directly to encoding value
         
         # clauses and encoding values are all in the same order as parsed and defined in the arff file
-
+        chromosome.bitpos = 0
         attribute_blocks = chromosome.readlist(self.read_format_string)
         hypothesis = []
         for a in range(0, self.num_attributes - 1):
             clause = []
+            attribute_blocks[a].bitpos = 0
             for encoding_value in self.attributes_encoding[a][2]:
                 attribute_value_code = attribute_blocks[a].read('bin:2')
                 if attribute_value_code[0] == '0':
@@ -118,6 +121,7 @@ class mushroom_learner:
 
         # add final classification to hypothesis
         # encoding value of classification corresponds to bit value + 1
+        attribute_blocks[-1].bitpos = 0
         hypothesis.append(int(attribute_blocks[-1].read('bin:1')) + 1)
         
         return hypothesis
@@ -139,14 +143,14 @@ class mushroom_learner:
                 h_string = h_string[:-4]
                 h_string += ') AND '
         h_string = h_string[:-4]
-        h_string += self.attributes[self.num_attributes - 1][0]
+        h_string += '= {}'.format(self.attributes[self.num_attributes - 1][1][hypothesis[-1] - 1])
 
         return h_string
 
     def test_hypothesis(self, hypothesis):
         num_pass = 0
         for instance in self.data:
-            consistent = evaluate_hypothesis(hypothesis, instance)
+            consistent = self.evaluate_hypothesis(hypothesis, instance)
             if consistent:
                 num_pass += 1
         percentage_pass = num_pass / self.num_data * 100
@@ -165,6 +169,8 @@ class mushroom_learner:
                 # no clause appearing is equivalent to disjunctive clause with all literals
                 satisfied = False
                 break
+            if training_instance[a] is None:
+                continue
             if training_instance[a] in hypothesis[a]:
                 continue
             else:
@@ -202,7 +208,7 @@ class mushroom_learner:
     def create_random_chromosome(self):
         initial = bitstring.BitStream(bin='0'*self.chromosome_length)
         random_init = np.random.random_sample(self.chromosome_length)
-        intial.invert(np.where(random_init < 0.5)[0].tolist())
+        initial.invert(np.where(random_init < 0.5)[0].tolist())
         return initial
 
     def run_simulation(self, file_name, epochs, generation_size, 
@@ -219,7 +225,7 @@ class mushroom_learner:
             results.write('Data format:\n ++++ for last solution\nEpoch,curr_avg_fitness,curr_best_chromosome,curr_best_fitness\n')
 
             initial_chromosomes = []
-            initial_chromosomes.extend([create_random_chromosome()] * generation_size)
+            initial_chromosomes.extend([self.create_random_chromosome()] * generation_size)
 
             curr_generation = initial_chromosomes
             # final_generation = self.ga_trainer.ga_learn(initial_chromosomes)
@@ -233,7 +239,7 @@ class mushroom_learner:
                 curr_generation = next_generation
 
             final_fitness = self.ga_trainer.find_gen_fitness(curr_generation)
-            best_id = np.argmax(final_fitness)[0]
+            best_id = np.argmax(final_fitness)
             best_fitness = final_fitness[best_id]
             best_chromosome = curr_generation[best_id]
             best_hypothesis = self.create_hypothesis(best_chromosome)
