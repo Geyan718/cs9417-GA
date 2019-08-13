@@ -29,13 +29,8 @@ class balance_learner:
         data = file_contents['data']
         return attributes, data
 
-<<<<<<< HEAD
-    def create_random_chromosome(length):
-        initial = np.random.normal(0,0.1,length)
-=======
     def create_random_chromosome(self):
         initial = numpy.random.normal(0,0.1,self.chromosome_length)
->>>>>>> 11470cefb261d67377569c4a48165432c5103a6f
         return initial
 
     def get_weights_and_biases(self, chromosome):
@@ -45,9 +40,15 @@ class balance_learner:
         second_layer_bias = chromosome[33:35].reshape(1,3)
         weights_list = [first_layer_weights, second_layer_weights]
         biases_list = [first_layer_bias, second_layer_bias]
+        return weights_list, biases_list
 
-<<<<<<< HEAD
-    def mushroom_one_point_crossover(self, parents):
+    def balance_fitness(self, chromosome):
+        weights, biases = self.get_weights_and_biases(chromosome)
+        predictions = nn.forward(self.training_instances, weights, biases)
+        loss = nn.cross_entropy(predictions, self.training_labels)
+        return -loss
+
+    def balance_one_point_crossover(self, parents):
         crossover_point = np.random.randint(0, self.chromosome_length)
         parent_1 = parents[0]
         parent_2 = parents[1]
@@ -55,7 +56,7 @@ class balance_learner:
         offspring_2 = parent_2[:crossover_point] + parent_1[crossover_point:]
         return [offspring_1, offspring_2]
 
-    def mushroom_two_point_crossover(self, parents):
+    def balance_two_point_crossover(self, parents):
         crossover_points = np.random.randint(0, self.chromosome_length, 2)
         if crossover_points[0] == crossover_points[1]:
             offspring_1 = parents[0].copy()
@@ -69,7 +70,7 @@ class balance_learner:
             offspring_2 = parent_2[:low] + parent_1[low:high] + parent_2[high:]
         return [offspring_1, offspring_2]
 
-    def mutation(self, chromosome):
+    def balance_mutation(self, chromosome):
 
         mutation_chance = np.random.random_sample(self.chromosome_length)
 
@@ -79,25 +80,6 @@ class balance_learner:
             chromosome[index] += increment*0.1
         
         return chromosome
-=======
-        return weights_list, biases_list
-
-    def balance_fitness(self, chromosome):
-        weights, biases = self.get_weights_and_biases(chromosome)
-        predictions = nn.forward(self.training_instances, weights, biases)
-        loss = nn.cross_entropy(predictions, self.training_labels)
-        return -loss
-
-    def balance_one_point_crossover(self, parents):
-        pass
-
-    def balance_two_point_crossover(self, parents):
-        pass
-
-    def mutation(self, chromosome):
-        pass  
->>>>>>> 11470cefb261d67377569c4a48165432c5103a6f
-
     
     def run_simulation(self, file_name, epochs, generation_size, 
                        crossover_probability, crossover_type, mutation_probability):
