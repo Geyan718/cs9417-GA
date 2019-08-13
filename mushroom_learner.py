@@ -20,7 +20,7 @@ class mushroom_learner:
         total_val_length = 0
         for a in self.attributes:
             value_length = len(a[1])
-            self.attributes_encoding.append((a[0], value_length, [r for r in range(0, value_length)]))
+            self.attributes_encoding.append((a[0], value_length, [r for r in range(1, value_length+1)]))
             total_val_length += value_length
             self.read_format_string += 'bits:{}, '.format(value_length*2)
         
@@ -30,6 +30,11 @@ class mushroom_learner:
         self.read_format_string += '1'
         self.chromosome_length = total_val_length * 2 - 1
         self.num_attributes = len(self.attributes_encoding)
+
+        # add 1 to all encoding values, which by default in arff start from 0
+        for instance in self.data:
+            for a in instance:
+                a += 1
 
     def parse_arff_file(self, file='mushroom.arff'):
         with open(file, 'r') as f:
@@ -97,7 +102,7 @@ class mushroom_learner:
         for a in range(0, self.num_attributes - 1):
             clause = []
             for encoding_value in self.attributes_encoding[a][2]:
-                attribute_value_code = attribute_blocks[a].read(2)
+                attribute_value_code = attribute_blocks[a].read('bin:2')
                 if attribute_value_code[0] == '0':
                     # value is not inlcuded
                     continue
@@ -112,14 +117,31 @@ class mushroom_learner:
             hypothesis.append(clause)
 
         # add final classification to hypothesis
-        # encoding value of classification corresponds directly to bit value
-        hypothesis.append(attribute_blocks[-1].read(1))
+        # encoding value of classification corresponds to bit value + 1
+        hypothesis.append(int(attribute_blocks[-1].read('bin:1')) + 1)
         
         return hypothesis
 
-    def print_hypothesis(self, h):
+    def print_hypothesis(self, hypothesis):
         # return hypothesis in readable string form
-        pass
+        h_string = ''
+        for c in range(0, self.num_attributes - 1):
+            if not hypothesis[c]:
+                h_string += '{}=() AND '.format(self.attributes[c][0])
+            else:
+                h_string += '{}=('.format(self.attributes[c][0])
+                for v in hypothesis[c]:
+                    # index in attributes is encoding value - 1
+                    if v > 0:
+                        h_string += '{} OR '.format(self.attributes[c][1][v-1])
+                    else: # v < 0, negative literal
+                        h_string += 'NOT {} OR '.format(self.attributes[c][1][-v-1])
+                h_string = h_string[:-4]
+                h_string += ') AND '
+        h_string = h_string[:-4]
+        h_string += self.attributes[self.num_attributes - 1][0]
+
+        return h_string
 
     def test_hypothesis(self, hypothesis):
         num_pass = 0
@@ -137,6 +159,12 @@ class mushroom_learner:
 
         satisfied = True
         for a in range(0, self.num_attributes - 1):
+            if not hypothesis[a]:
+                # empty disjunctive clause evaluates to false
+                # this is different to no clause appearing, such as given in the baseline rules
+                # no clause appearing is equivalent to disjunctive clause with all literals
+                satisfied = False
+                break
             if training_instance[a] in hypothesis[a]:
                 continue
             else:
