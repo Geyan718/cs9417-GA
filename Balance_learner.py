@@ -4,7 +4,7 @@ import time
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from GA_learner import GA_learner
-from NeuralNetwork import NeuralNetwork as nn 
+import NeuralNetwork as nn
 
 
 class balance_learner:
@@ -24,20 +24,20 @@ class balance_learner:
 
     def parse_arff_file(self, file='balance-scale.arff'):
         with open(file, 'r') as f:
-            file_contents = arff.load(f, encode_nomial = True)
+            file_contents = arff.load(f, encode_nominal = True)
         attributes = file_contents['attributes']
         data = file_contents['data']
         return attributes, data
 
     def create_random_chromosome(self):
-        initial = numpy.random.normal(0,0.1,self.chromosome_length)
+        initial = np.random.normal(0,0.1,self.chromosome_length)
         return initial
 
     def get_weights_and_biases(self, chromosome):
-        first_layer_weights = chromosome[0:15].reshape(4,4)
-        first_layer_bias = chromosome[16:19].reshape(1,4)
+        first_layer_weights = chromosome[:16].reshape(4,4)
+        first_layer_bias = chromosome[16:20].reshape(1,4)
         second_layer_weights = chromosome[20:32].reshape(4,3)
-        second_layer_bias = chromosome[33:35].reshape(1,3)
+        second_layer_bias = chromosome[32:].reshape(1,3)
         weights_list = [first_layer_weights, second_layer_weights]
         biases_list = [first_layer_bias, second_layer_bias]
         return weights_list, biases_list
@@ -95,7 +95,7 @@ class balance_learner:
             results.write('Data format:\n++++ before last solution\nEpoch,curr_avg_fitness,curr_best_fitness\n')
 
             initial_chromosomes = []
-            initial_chromosomes.extend([create_random_chromosome()] * generation_size)
+            initial_chromosomes.extend([self.create_random_chromosome()] * generation_size)
 
             curr_generation = initial_chromosomes
             # final_generation = self.ga_trainer.ga_learn(initial_chromosomes)

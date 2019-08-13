@@ -43,7 +43,7 @@ class GA_learner():
         # represents number of times chromosome is copied
         selection_prob_split = np.modf(curr_gen_fitness)
         int_selection = selection_prob_split[1]
-        int_selection.astype(int)
+        int_selection = int_selection.astype(int)
 
         if (int_selection.sum() > self.generation_size):
             # Sort by fitness, pick best ones
@@ -66,7 +66,7 @@ class GA_learner():
             # represents probability a chromosome adds additional copies
             frac_selection = selection_prob_split[0]
             while(len(intermediate_gen) < self.generation_size):
-                rand_chosen_id = np.rand.randint(0, self.generation_size)
+                rand_chosen_id = np.random.randint(0, self.generation_size)
                 if frac_selection[rand_chosen_id] == 0:
                     continue
                 if np.random.random_sample() < frac_selection[rand_chosen_id]:
