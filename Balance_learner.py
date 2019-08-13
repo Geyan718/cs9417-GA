@@ -19,7 +19,8 @@ class balance_learner:
         # one hot encoding for data
         ct = ColumnTransformer([('one_hot', OneHotEncoder(), [4])],remainder='passthrough',sparse_threshold=0)
         tf_d = ct.fit_transform(self.data)
-        self.data = np.concatenate((tf_d[:,3:], tf_d[:,0:3]), axis=1)
+        self.training_instances = tf_d[:,3:]
+        self.training_labels = tf_d[:,0:3]
 
     def parse_arff_file(self, file='balance-scale.arff'):
         with open(file, 'r') as f:
@@ -32,20 +33,21 @@ class balance_learner:
         initial = numpy.random.normal(0,0.1,self.chromosome_length)
         return initial
 
-    def import_weights(self,chromosome):
-        chrom = self.chromosome.copy()
-        first_layer_weights = chrom[0:15].reshape(4,4)
-        first_layer_bias = chrom[16:19].reshape(1,4)
-        second_layer_weights = chrom[20:32].reshape(4,3)
-        second_layer_bias = chrom[33:35].reshape(1,3)
-        
-        #pass it to feed forward 
-        nn.weight_list = first_layer_weights
-        output = nn.forward(nn,)
+    def get_weights_and_biases(self, chromosome):
+        first_layer_weights = chromosome[0:15].reshape(4,4)
+        first_layer_bias = chromosome[16:19].reshape(1,4)
+        second_layer_weights = chromosome[20:32].reshape(4,3)
+        second_layer_bias = chromosome[33:35].reshape(1,3)
+        weights_list = [first_layer_weights, second_layer_weights]
+        biases_list = [first_layer_bias, second_layer_bias]
 
+        return weights_list, biases_list
 
-    
-   
+    def balance_fitness(self, chromosome):
+        weights, biases = self.get_weights_and_biases(chromosome)
+        predictions = nn.forward(self.training_instances, weights, biases)
+        loss = nn.cross_entropy(predictions, self.training_labels)
+        return -loss
 
     def balance_one_point_crossover(self, parents):
         pass
