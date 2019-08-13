@@ -5,7 +5,7 @@ class NeuralNetwork():
     neural_numbers = [4]
     input_dim = 4
     output_dim = 3
-    layers = len(self.neural_numbers) + 1
+    layers = len(cls.neural_numbers) + 1
     
     def forward(cls, X, weight_list, biases_list):
 
