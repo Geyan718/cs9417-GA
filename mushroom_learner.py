@@ -33,9 +33,9 @@ class mushroom_learner():
 
         # add 1 to all encoding values, which by default in arff start from 0
         for instance in self.data:
-            for a in instance:
-                if a is not None:
-                    a += 1
+            for a in range(0, self.num_attributes):
+                if instance[a] is not None:
+                    instance[a] += 1
 
     def parse_arff_file(self, file='mushroom.arff'):
         with open(file, 'r') as f:
@@ -225,7 +225,8 @@ class mushroom_learner():
             results.write('Data format:\n ++++ for last solution\nEpoch,curr_avg_fitness,curr_best_chromosome,curr_best_fitness\n')
 
             initial_chromosomes = []
-            initial_chromosomes.extend([self.create_random_chromosome()] * generation_size)
+            for i in range(0, generation_size):
+                initial_chromosomes.append(self.create_random_chromosome())
 
             curr_generation = initial_chromosomes
             # final_generation = self.ga_trainer.ga_learn(initial_chromosomes)
@@ -233,9 +234,8 @@ class mushroom_learner():
                 curr_avg_fitness, curr_elite, next_generation = self.ga_trainer.grow_generation(curr_generation)
             
                 if e % 10 == 0:
-                    results.write('{},{},{},{}\n'.format(str(e), str(curr_avg_fitness),
-                                                            self.print_hypothesis(curr_elite[0]), str(curr_elite[1])))
-                    print('Epoch {}: avg_fitness {}, best_fitness {}\n'.format(e, curr_avg_fitness, elite[1]))
+                    results.write('{},{},{}\n'.format(e, curr_avg_fitness, curr_elite[1]))
+                    print('Epoch {}: avg_fitness {}, best_fitness {}'.format(e, curr_avg_fitness, curr_elite[1]))
                 curr_generation = next_generation
 
             final_fitness = self.ga_trainer.find_gen_fitness(curr_generation)
@@ -246,7 +246,7 @@ class mushroom_learner():
             best_readable = self.print_hypothesis(best_hypothesis)
         
             results.write('++++\n')
-            results.write('{},{}'.format(best_readable, str(best_fitness)))
+            results.write('{}\n{}'.format(best_fitness, best_readable))
 
     def write_information(self, file_handle):
         file_handle.write('Epochs: {}\n'.format(str(self.ga_trainer.epochs_size)))
