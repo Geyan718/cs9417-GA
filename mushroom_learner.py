@@ -222,7 +222,7 @@ class mushroom_learner():
         with open(file_name, 'w') as results:
             self.write_information(results)
             # TODO: time logging
-            results.write('Data format:\n ++++ for last solution\nEpoch,curr_avg_fitness,curr_best_chromosome,curr_best_fitness\n')
+            results.write('Data format:\n ++++ for last solution\nEpoch,curr_avg_fitness,curr_best_fitness\n')
 
             initial_chromosomes = []
             for i in range(0, generation_size):
