@@ -52,8 +52,8 @@ class balance_learner:
         crossover_point = np.random.randint(0, self.chromosome_length)
         parent_1 = parents[0]
         parent_2 = parents[1]
-        offspring_1 = parent_1[:crossover_point] + parent_2[crossover_point:]
-        offspring_2 = parent_2[:crossover_point] + parent_1[crossover_point:]
+        offspring_1 = np.concatenate((parent_1[:crossover_point], parent_2[crossover_point:]))
+        offspring_2 = np.concatenate((parent_2[:crossover_point], parent_1[crossover_point:]))
         return [offspring_1, offspring_2]
 
     def balance_two_point_crossover(self, parents):
@@ -66,8 +66,8 @@ class balance_learner:
             parent_2 = parents[1]
             high = np.amax(crossover_points)
             low = np.amin(crossover_points)
-            offspring_1 = parent_1[:low] + parent_2[low:high] + parent_1[high:]
-            offspring_2 = parent_2[:low] + parent_1[low:high] + parent_2[high:]
+            offspring_1 = np.concatenate((parent_1[:low], parent_2[low:high], parent_1[high:]))
+            offspring_2 = np.concatenate((parent_2[:low], parent_1[low:high], parent_2[high:]))
         return [offspring_1, offspring_2]
 
     def balance_mutation(self, chromosome):
@@ -92,10 +92,11 @@ class balance_learner:
         with open(file_name, 'w') as results:
             self.write_information(results)
             # TODO: time logging
-            results.write('Data format:\n++++ before last solution\nEpoch,curr_avg_fitness,curr_best_fitness\n')
+            results.write('Data format:\n++++ before last solution\nEpoch,curr_avg_fitness,curr_best_fitness\n\n')
 
             initial_chromosomes = []
-            initial_chromosomes.extend([self.create_random_chromosome()] * generation_size)
+            for i in range(0, generation_size):
+                initial_chromosomes.append(self.create_random_chromosome())
 
             curr_generation = initial_chromosomes
             # final_generation = self.ga_trainer.ga_learn(initial_chromosomes)
@@ -103,8 +104,8 @@ class balance_learner:
                 curr_avg_fitness, curr_elite, next_generation = self.ga_trainer.grow_generation(curr_generation)
             
                 if e % 10 == 0:
-                    results.write('{},{},{}\n'.format(str(e), str(curr_avg_fitness), str(curr_elite[1])))
-                    print('Epoch {}: avg_fitness {}, best_fitness {}\n'.format(e, curr_avg_fitness, elite[1]))
+                    results.write('{},{},{}\n'.format(e, curr_avg_fitness, curr_elite[1]))
+                    print('Epoch {}: avg_fitness {}, best_fitness {}'.format(e, curr_avg_fitness, curr_elite[1]))
                 curr_generation = next_generation
 
             final_fitness = self.ga_trainer.find_gen_fitness(curr_generation)
@@ -113,7 +114,7 @@ class balance_learner:
             best_chromosome = curr_generation[best_id]
         
             results.write('++++\n')
-            results.write('{}\n{}'.format(str(best_fitness), best_chromosome))
+            results.write('{}\n{}'.format(best_fitness, best_chromosome))
 
     def write_information(self, file_handle):
         file_handle.write('Epochs: {}\n'.format(str(self.ga_trainer.epochs_size)))
